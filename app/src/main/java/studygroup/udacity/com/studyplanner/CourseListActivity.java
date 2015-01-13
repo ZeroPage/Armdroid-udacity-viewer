@@ -1,82 +1,104 @@
 package studygroup.udacity.com.studyplanner;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 
-/**
- * An activity representing a list of Courses. This activity
- * has different presentations for handset and tablet-size devices. On
- * handsets, the activity presents a list of items, which when touched,
- * lead to a {@link CourseDetailActivity} representing
- * item details. On tablets, the activity presents the list of items and
- * item details side-by-side using two vertical panes.
- * <p/>
- * The activity makes heavy use of fragments. The list of items is a
- * {@link CourseListFragment} and the item details
- * (if present) is a {@link CourseDetailFragment}.
- * <p/>
- * This activity also implements the required
- * {@link CourseListFragment.Callbacks} interface
- * to listen for item selections.
- */
-public class CourseListActivity extends ActionBarActivity
-        implements CourseListFragment.Callbacks {
+import studygroup.udacity.com.studyplanner.data.Courses;
 
-    /**
-     * Whether or not the activity is in two-pane mode, i.e. running on a tablet
-     * device.
-     */
-    private boolean mTwoPane;
-
+public class CourseListActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_course_list);
+        // TODO: 리스트뷰 가져오고, 리스트뷰에 CourseListAdapter 어뎁터 연결 할 것
+        // TODO: 아이템클릭 리스너도 연결할 것.
 
-        if (findViewById(R.id.course_detail_container) != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-large and
-            // res/values-sw600dp). If this view is present, then the
-            // activity should be in two-pane mode.
-            mTwoPane = true;
-
-            // In two-pane mode, list items should be given the
-            // 'activated' state when touched.
-            ((CourseListFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.course_list))
-                    .setActivateOnItemClick(true);
-        }
-
-        // TODO: If exposing deep links into your app, handle intents here.
+        refresh();
     }
 
-    /**
-     * Callback method from {@link CourseListFragment.Callbacks}
-     * indicating that the item with the given ID was selected.
-     */
     @Override
-    public void onItemSelected(String id) {
-        if (mTwoPane) {
-            // In two-pane mode, show the detail view in this activity by
-            // adding or replacing the detail fragment using a
-            // fragment transaction.
-            Bundle arguments = new Bundle();
-            arguments.putString(CourseDetailFragment.ARG_ITEM_ID, id);
-            CourseDetailFragment fragment = new CourseDetailFragment();
-            fragment.setArguments(arguments);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.course_detail_container, fragment)
-                    .commit();
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.refresh, menu);
+        return true;
+    }
 
-        } else {
-            // In single-pane mode, simply start the detail activity
-            // for the selected item ID.
-            Intent detailIntent = new Intent(this, CourseDetailActivity.class);
-            detailIntent.putExtra(CourseDetailFragment.ARG_ITEM_ID, id);
-            startActivity(detailIntent);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // TODO: refresh 버튼 기능 구현 하시오.
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void refresh() {
+        // TODO: fetch API data from network.
+        // hint AsyncTask를 사용하시오.
+        /* URL url = new URL("https://www.udacity.com/public-api/v0/courses");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.connect();
+        InputStream stream = connection.getInputStream();
+        InputStreamReader reader = new InputStreamReader(stream); */
+
+
+        // TODO 리스트 어뎁터에 값을 밀어넣을 것.
+        // hint new Gson().fromJson(jsonString,Courses.class); 하면 얻을 수 있음.
+    }
+
+    private static class CourseListAdapter extends ArrayAdapter<Courses.Course> implements AdapterView.OnItemClickListener{
+
+        public CourseListAdapter(Context context) {
+            super(context, R.layout.course_list_item, R.id.course_title);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            View view;
+            if (convertView == null) {
+                view = LayoutInflater.from(getContext()).inflate(R.layout.course_list_item, parent, false);
+            } else {
+                view = convertView;
+            }
+
+            Courses.Course course = getItem(position);
+            ImageView iv = (ImageView) view.findViewById(R.id.course_image);
+            Glide.with(getContext())
+                    .fromString()
+                    .load(course.getImage())
+                    .fitCenter()
+                    .error(R.drawable.ic_launcher)
+                    .into(iv);
+
+            TextView titleView = (TextView) view.findViewById(R.id.course_title);
+            TextView subtitleView = (TextView) view.findViewById(R.id.course_subtitle);
+
+            titleView.setText(course.getTitle());
+            subtitleView.setText(course.getSubtitle());
+
+            return view;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            // 이건 고한종이 즐겨 쓰는 방법으로, 어뎁터가 아이템클릭 리스너의 역할도 하게끔 하는 것.
+            // 이러면 getItem(position); 메서드를 바로 쓸 수 있어서 타입변환이 필요 없는 장점이 있다.
+
+            // TODO: CourseDetailActivity를 실행 시키는 Intent를 작성해서 작동시킬 것.
+
         }
     }
 }
