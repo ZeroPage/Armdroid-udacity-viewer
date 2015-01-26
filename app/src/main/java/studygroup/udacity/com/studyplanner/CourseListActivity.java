@@ -1,6 +1,7 @@
 package studygroup.udacity.com.studyplanner;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
@@ -12,19 +13,34 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import studygroup.udacity.com.studyplanner.data.Courses;
 
 public class CourseListActivity extends ActionBarActivity {
+
+    private ListView listView;
+    private CourseListAdapter courseListAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_course_list);
-        // TODO: 리스트뷰 가져오고, 리스트뷰에 CourseListAdapter 어뎁터 연결 할 것
-        // TODO: 아이템클릭 리스너도 연결할 것.
+
+        listView = (ListView) findViewById(R.id.listView);
+        courseListAdapter = new CourseListAdapter(this);
+        listView.setAdapter(courseListAdapter);
+        listView.setOnItemClickListener(courseListAdapter);
 
         refresh();
     }
@@ -39,26 +55,52 @@ public class CourseListActivity extends ActionBarActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // TODO: refresh 버튼 기능 구현 하시오.
+            case R.id.refresh:
+                refresh();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void refresh() {
-        // TODO: fetch API data from network.
-        // hint AsyncTask를 사용하시오.
-        /* URL url = new URL("https://www.udacity.com/public-api/v0/courses");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.connect();
-        InputStream stream = connection.getInputStream();
-        InputStreamReader reader = new InputStreamReader(stream); */
+        new AsyncTask<Void, Void, Courses>() {
 
+            @Override
+            protected Courses doInBackground(Void... params) {
+                HttpURLConnection connection = null;
+                InputStream stream = null;
+                InputStreamReader reader = null;
+                try {
+                    URL url = new URL("https://www.udacity.com/public-api/v0/courses");
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.connect();
+                    stream = connection.getInputStream();
+                    reader = new InputStreamReader(stream);
+                    return new Gson().fromJson(reader, Courses.class);
+                } catch (IOException e) {
+                    e.printStackTrace(); // temp.
+                } finally {
+                    try {
+                        if (connection != null) connection.disconnect(); // need?
+                        if (reader != null) reader.close();
+                        if (stream != null) stream.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+                return null;
+            }
 
-        // TODO 리스트 어뎁터에 값을 밀어넣을 것.
-        // hint new Gson().fromJson(jsonString,Courses.class); 하면 얻을 수 있음.
+            @Override
+            protected void onPostExecute(Courses fetched) {
+                if (fetched == null) {
+                    return; // do nothing.
+                }
+                courseListAdapter.addAll(fetched.getCourses());
+            }
+        }.execute();
     }
 
-    private static class CourseListAdapter extends ArrayAdapter<Courses.Course> implements AdapterView.OnItemClickListener{
+    private static class CourseListAdapter extends ArrayAdapter<Courses.Course> implements AdapterView.OnItemClickListener {
 
         public CourseListAdapter(Context context) {
             super(context, R.layout.course_list_item, R.id.course_title);
@@ -94,11 +136,8 @@ public class CourseListActivity extends ActionBarActivity {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            // 이건 고한종이 즐겨 쓰는 방법으로, 어뎁터가 아이템클릭 리스너의 역할도 하게끔 하는 것.
-            // 이러면 getItem(position); 메서드를 바로 쓸 수 있어서 타입변환이 필요 없는 장점이 있다.
-
-            // TODO: CourseDetailActivity를 실행 시키는 Intent를 작성해서 작동시킬 것.
-
+            CourseDetailActivity.startActivityWith(getContext(),getItem(position));
         }
     }
+
 }
